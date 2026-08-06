@@ -3,7 +3,6 @@
   hosts: all
   vars:
     _ray_head_node: "{{ ray_head_node | default(false, true) | bool }}"
-    _ray_worker_node: not _ray_head_node
     ray_head_node_address: ""
     ray_dashboard_port: "8265"
     ray_client_server_port: "10001"
@@ -45,7 +44,7 @@
         _ray_cmd: uv run ray start --head --node-ip-address="$PRIVATE_NETWORK" --port={{ ray_head_port }} --dashboard-host="$PRIVATE_NETWORK" --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
 
     - name: Set ray command (worker node)
-      when: _ray_worker_node
+      when: not _ray_head_node
       ansible.builtin.set_fact:
         _ray_cmd: uv run ray start --address="{{ ray_head_node_address | default('\$RAY_HEAD_NODE_ADDRESS', true) }}" --node-ip-address="$PRIVATE_NETWORK"
 
