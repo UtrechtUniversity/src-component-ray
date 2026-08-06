@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=ray
 Environment="{{ ray_env }}"
-ExecStart=/bin/sh -c 'export PRIVATE_NETWORK="$(/usr/local/bin/find_private_network.sh)" && {{ _ray_cmd }}'
+ExecStart=/usr/local/bin/start_ray.sh
 Restart=always
 StandardOutput=file:/var/log/ray/ray-service.log
 StandardError=file:/var/log/ray/ray-service.err

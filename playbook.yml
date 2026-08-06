@@ -23,12 +23,20 @@
     - name: Install ray
       become: true
       become_user: ray
-      ansible.builtin.command: uv tool install ray[default]
+      ansible.builtin.command: uv tool install "ray[default]"
 
     - name: Create find_ip script
       ansible.builtin.copy:
         src: find_private_network.sh
         dest: /usr/local/bin/find_private_network.sh
+        owner: root
+        group: root
+        mode: "0655"
+
+    - name: Create start_ray script
+      ansible.builtin.template:
+        src: start_ray.sh.j2
+        dest: /usr/local/bin/start_ray.sh
         owner: root
         group: root
         mode: "0655"
@@ -42,16 +50,6 @@
       when: find_private_network.rc != 0
       ansible.builtin.fail:
         msg: "No private network found! Result of script: {{ find_private_network.stdout }}"
-
-    - name: Set ray command (head node)
-      when: _ray_head_node
-      ansible.builtin.set_fact:
-        _ray_cmd: ray start --head --node-ip-address="$PRIVATE_NETWORK" --port={{ ray_head_port }} --dashboard-host="$PRIVATE_NETWORK" --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
-
-    - name: Set ray command (worker node)
-      when: not _ray_head_node
-      ansible.builtin.set_fact:
-        _ray_cmd: ray start --address="{{ ray_head_node_address | default('\$RAY_HEAD_NODE_ADDRESS', true) }}" --node-ip-address="$PRIVATE_NETWORK"
 
     - name: Create Ray systemd service
       ansible.builtin.template:
