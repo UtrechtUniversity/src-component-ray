@@ -77,7 +77,9 @@
         owner: ray
         group: ray
         mode: "0644"
-      notify: Start Ray systemd service
+      notify:
+        - Start Ray systemd service
+        - Fail if worker could not connect to head node
 
     - name: Enable logrotation
       ansible.builtin.blockinfile:
@@ -102,3 +104,11 @@
         name: ray
         state: started
         daemon_reload: true
+
+    - name: Fail if ray is not active
+      become: true
+      become_user: ray
+      ansible.builtin.command:
+        cmd: uv tool run ray status
+      retry: 10
+      delay: 5
