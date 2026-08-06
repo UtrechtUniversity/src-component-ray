@@ -2,7 +2,14 @@
 export PRIVATE_NETWORK="$(/usr/local/bin/find_private_network.sh)"
 
 {% if _ray_head_node %}
-uv tool run ray start --head --node-ip-address="$PRIVATE_NETWORK" --port=6379 --dashboard-host="$PRIVATE_NETWORK" --dashboard-port=8266 --ray-client-server-port=10001
+uv tool run ray start --head \
+    --node-ip-address="$PRIVATE_NETWORK" \
+    --port="{{ ray_head_port }}" \
+    --dashboard-host="$PRIVATE_NETWORK" \
+    --dashboard-port="{{ ray_dashboard_port }}" \
+    --ray-client-server-port="{{ ray_client_server_port }}"
 {% else %}
-uv tool run ray start --address="{{ ray_head_node_address | default('\$RAY_HEAD_NODE_ADDRESS', true) }}" --node-ip-address="$PRIVATE_NETWORK"
+uv tool run ray start \
+    --address="{{ ray_head_node_address | default('\$RAY_HEAD_NODE_ADDRESS', true) }}" \
+    --node-ip-address="$PRIVATE_NETWORK"
 {% endif %}
