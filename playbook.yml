@@ -82,22 +82,6 @@
         - Start Ray systemd service
         - Fail if ray is not active
 
-    - name: Enable logrotation
-      ansible.builtin.blockinfile:
-        path: /etc/logrotate.d/ray
-        block: >
-          /var/log/ray/ {
-            hourly
-            rotate 5
-            size 50M
-            compress
-            delaycompress
-            missingok
-            copytruncate
-          }
-        create: true
-        mode: "0644"
-
   handlers:
 
     - name: Start Ray systemd service

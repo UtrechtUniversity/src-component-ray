@@ -8,8 +8,6 @@ User=ray
 Environment="{{ ray_env }}"
 ExecStart=/usr/local/bin/start_ray.sh
 Restart=always
-StandardOutput=file:/var/log/ray/ray-service.log
-StandardError=file:/var/log/ray/ray-service.err
 
 [Install]
 WantedBy=multi-user.target
