@@ -6,7 +6,7 @@
     _ray_head_node_address: "{{ ray_head_node_address | default('', true) }}"
     _ray_dashboard_port: "{{ ray_dashboard_port | default('8265', true) }}"
     _ray_client_server_port: "{{ ray_client_server_port | default('10001', true) }}"
-    _ray_head_node_port: "{{ ray_head_node_port | default('6379', true)"
+    _ray_head_node_port: "{{ ray_head_node_port | default('6379', true) }}"
     _ray_env: "{{ ray_env | default('') }}"
     _ray_public_key: "{{ ray_public_key | default('') }}"
     gather_facts: false
