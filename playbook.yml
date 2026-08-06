@@ -1,57 +1,39 @@
 ---
-- name: Example component
-  hosts: localhost # On ResearchCloud, the target host is always simply 'localhost'.
+- name: Install a Ray head node or worker
+  hosts: all
   vars:
-    # You can define variables here.
-    # One use for this is to ensure that variables expected to be passed from the SRC portal have sane defaults.
-    # For example:
-    _src_component_foo: "{{ src_component_foo | default('fallback value') }}"
-    _src_component_bar: "Xone,Xtwo,Xthree"
-    _src_component_boolean: "{{ src_component_boolean | default(true, true) | bool }}"
-    # But of course you can also define ordinary variables:
-    testfile: /tmp/test
-    test_pip_packages: []
-  gather_facts: true
-
-  roles:
-    - role: uusrc.general.fact_regular_users
+    ray_head_node: false
+    ray_worker_node: not ray_head_node
+    ray_head_node_address: "" # if this is a worker node, what head node should we connect to?
+    ray_head_node_command: |
+    ray_dashboard_port: "8265"
+    ray_client_server_port: "10001"
+    ray_head_port: "6379"
+    ray_env: {}
+    gather_facts: false
 
   tasks:
-    # Some example tasks below to introduce Ansible
 
-    - name: Loop over all non-system users and display their names
-      ansible.builtin.debug:
-        msg: The user {{ item.user }} exists on the system.
-      with_items: "{{ fact_regular_users }}"
-      when: ansible_os_family == 'Debian' # we can use Ansible OS facts because we have set gather_facts to true
+    - name: Create user ray # fill in
 
-    - name: This is a block of tasks that belong together
-      when: _src_component_boolean # this condition is applied to all tasks in the block
-      tags: molecule-idempotence-notest # same for tags
-      block:
+    - name: Find private network interface # fill in -- assume there is only one private network interface
+      # attempt to make this task as generic as possible so it works across linux/unix flavours, but if necessary, just assume Debian or Ubuntu
+      # register the result in the variable _private_network
 
-        - name: Copy some content to a file
-          ansible.builtin.copy:
-            dest: "{{ testfile }}"
-            mode: "0700"
-            owner: root
-            group: root
-            content: "{{ _src_component_bar | split | map('regex_replace', 'X', '') | join }}" # You can create pipes using filters
-            # src: foo.txt # instead of 'content', you can also pass the 'src' argument to copy an entire file
+    - name: Set ray command (head node) # complete
+      when: ray_head_none
+      ansible.builtin.set_fact:
+        _ray_cmd: uv run ray start --head --node-ip-address={{ _private_network }} --port={{ ray_head_port }} --dashboard-host={{ __private_network }} --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
 
-        - name: Cat the contents of this file
-          ansible.builtin.command:
-            cmd: cat {{ testfile }}
-          register: cat_testfile # store the results of this module in a new variable
+    - name: Set ray command (worker node) # complete
+      when: ray_worker_node
+      ansible.builtin.set_fact:
+        _ray_cmd: uv run ray start --address="{{ ray_head_node_address }}:{{ ray_head_port }}" --node-ip-address="{{ _private_network }}"
 
-        - name: Debug the results of our cat command
-          ansible.builtin.debug:
-            var: cat_testfile.stdout
+    - name: Create Ray systemd service # fill in
+      # run as user ray
+      # run command _ray_cmd
+      # allow passing optional extra environment variables defined in variable ray_env
+      # run handler
 
-        - name: Unlike the command module, shell module can use shell features like redirection
-          ansible.builtin.shell:
-            cmd: cat {{ testfile }} > /tmp/test2
-
-    - name: Install a number of pip packages
-      ansible.builtin.pip: # the pip module has many useful arguments, for instance related to venvs
-        name: "{{ test_pip_packages }}"
+    - name: Start Ray systemd service # fill in -- this should be a handler
