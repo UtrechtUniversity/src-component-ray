@@ -13,6 +13,9 @@
 
   tasks:
 
+    # todo add storage location
+    # todo scan for head node?
+
     - name: Create user ray
       ansible.builtin.user:
         name: ray
@@ -73,5 +76,5 @@
   handlers:
     - name: Start Ray systemd service
       ansible.builtin.systemd:
-      name: ray
-      state: started
+        name: ray
+        state: started
