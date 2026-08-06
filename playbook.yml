@@ -2,9 +2,9 @@
 - name: Install a Ray head node or worker
   hosts: all
   vars:
-    ray_head_node: false
-    ray_worker_node: not ray_head_node
-    ray_head_node_address: "" # if this is a worker node, what head node should we connect to?
+    _ray_head_node: "{{ ray_head_node | default(false, true) | bool }}"
+    _ray_worker_node: not _ray_head_node
+    ray_head_node_address: ""
     ray_dashboard_port: "8265"
     ray_client_server_port: "10001"
     ray_head_port: "6379"
@@ -40,14 +40,14 @@
         msg: "No private network found! Result of script: {{ find_private_network.stdout }}"
 
     - name: Set ray command (head node)
-      when: ray_head_none
+      when: _ray_head_node
       ansible.builtin.set_fact:
-        _ray_cmd: uv run ray start --head --node-ip-address="$PRIVATE_NETWORK" --port={{ ray_head_port }} --dashboard-host={{ __private_network }} --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
+        _ray_cmd: uv run ray start --head --node-ip-address="$PRIVATE_NETWORK" --port={{ _ray_head_port }} --dashboard-host={{ __private_network }} --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
 
     - name: Set ray command (worker node)
-      when: ray_worker_node
+      when: _ray_worker_node
       ansible.builtin.set_fact:
-        _ray_cmd: uv run ray start --address="{{ ray_head_node_address | default('$RAY_HEAD_NODE_ADDRESS', true) }}" --node-ip-address="$PRIVATE_NETWORK"
+        _ray_cmd: uv run ray start --address="{{ ray_head_node_address | default('\$RAY_HEAD_NODE_ADDRESS', true) }}" --node-ip-address="$PRIVATE_NETWORK"
 
     - name: Create Ray systemd service
       ansible.builtin.template:
