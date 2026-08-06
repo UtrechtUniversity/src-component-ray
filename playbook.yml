@@ -20,6 +20,11 @@
         name: ray
         state: present
 
+    - name: Install ray
+      become: true
+      become_user: ray
+      ansible.builtin.command: uv tool install ray[default]
+
     - name: Create find_ip script
       ansible.builtin.copy:
         src: find_private_network.sh
