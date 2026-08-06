@@ -36,7 +36,7 @@
 
     - name: Fail if no private network
       when: find_private_network.rc != 0
-      ansible.builin.fail:
+      ansible.builtin.fail:
         msg: "No private network found! Result of script: {{ find_private_network.stdout }}"
 
     - name: Set ray command (head node)
