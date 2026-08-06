@@ -79,7 +79,7 @@
         mode: "0644"
       notify:
         - Start Ray systemd service
-        - Fail if worker could not connect to head node
+        - Fail if ray is not active
 
     - name: Enable logrotation
       ansible.builtin.blockinfile:
