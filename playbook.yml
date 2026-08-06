@@ -22,11 +22,22 @@
         state: present
 
     - name: Setup ssh key
-      when: ray_public_key | length > 0
+      when: (ray_public_key | length) > 0
       ansible.posix.authorized_key:
         user: ray
         state: present
         key: "{{ ray_public_key }}"
+
+    - name: Allow ray user to control systemd service
+      community.general.sudoers:
+        name: ray-systemctl
+        state: present
+        user: ray
+        nopassword: true
+        commands:
+          - /usr/bin/systemctl start ray.service
+          - /usr/bin/systemctl restart ray.service
+          - /usr/bin/systemctl stop ray.service
 
     - name: Install ray
       become: true
