@@ -42,7 +42,7 @@
     - name: Set ray command (head node)
       when: _ray_head_node
       ansible.builtin.set_fact:
-        _ray_cmd: uv run ray start --head --node-ip-address="$PRIVATE_NETWORK" --port={{ ray_head_port }} --dashboard-host={{ __private_network }} --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
+        _ray_cmd: uv run ray start --head --node-ip-address="$PRIVATE_NETWORK" --port={{ ray_head_port }} --dashboard-host="$PRIVATE_NETWORK" --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
 
     - name: Set ray command (worker node)
       when: _ray_worker_node
