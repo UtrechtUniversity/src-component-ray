@@ -30,7 +30,8 @@
         mode: "0655"
 
     - name: Test find network interface
-      ansible.builtin.command: /usr/local/bin/find_private_network.sh
+      ansible.builtin.command:
+        cmd: /usr/local/bin/find_private_network.sh
       register: find_private_network
 
     - name: Fail if no private network
