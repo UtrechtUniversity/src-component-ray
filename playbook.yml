@@ -3,12 +3,12 @@
   hosts: all
   vars:
     _ray_head_node: "{{ ray_head_node | default(false, true) | bool }}"
-    ray_head_node_address: ""
-    ray_dashboard_port: "8265"
-    ray_client_server_port: "10001"
-    ray_head_port: "6379"
-    ray_env: ""
-    ray_public_key: ""
+    _ray_head_node_address: "{{ ray_head_node_address | default('', true) }}"
+    _ray_dashboard_port: "{{ ray_dashboard_port | default('8265', true) }}"
+    _ray_client_server_port: "{{ ray_client_server_port | default('10001', true) }}"
+    _ray_head_port: "{{ ray_head_port | default('6379', true)"
+    _ray_env: "{{ ray_env | default('') }}"
+    _ray_public_key: "{{ ray_public_key | default('') }}"
     gather_facts: false
 
   tasks:
@@ -22,11 +22,11 @@
         state: present
 
     - name: Setup ssh key
-      when: (ray_public_key | length) > 0
+      when: (_ray_public_key | length) > 0
       ansible.posix.authorized_key:
         user: ray
         state: present
-        key: "{{ ray_public_key }}"
+        key: "{{ _ray_public_key }}"
 
     - name: Allow ray user to control systemd service
       community.general.sudoers:
