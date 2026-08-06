@@ -2,14 +2,26 @@
 export PRIVATE_NETWORK="$(/usr/local/bin/find_private_network.sh)"
 
 {% if _ray_head_node %}
+
 uv tool run ray start --head \
     --node-ip-address="$PRIVATE_NETWORK" \
-    --port="{{ _ray_head_port }}" \
+    --port="{{ _ray_head_node_port }}" \
     --dashboard-host="$PRIVATE_NETWORK" \
     --dashboard-port="{{ _ray_dashboard_port }}" \
     --ray-client-server-port="{{ _ray_client_server_port }}"
+
 {% else %}
+
+{% if (_ray_head_node_address | length) == 0 %}
+address="$RAY_HEAD_NODE_ADDRESS"
+{% elif not ":" in _ray_head_node_address %}
+address="{{ _ray_head_node_address }}:{{ _ray_head_node_port }}"
+{% else %}
+address="{{ _ray_head_node_address }}"
+{% endif %}
+
 uv tool run ray start \
-    --address="{{ _ray_head_node_address | default('\$RAY_HEAD_NODE_ADDRESS', true) }}" \
+    --address="$address" \
     --node-ip-address="$PRIVATE_NETWORK"
+
 {% endif %}
