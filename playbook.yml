@@ -5,7 +5,6 @@
     ray_head_node: false
     ray_worker_node: not ray_head_node
     ray_head_node_address: "" # if this is a worker node, what head node should we connect to?
-    ray_head_node_command: |
     ray_dashboard_port: "8265"
     ray_client_server_port: "10001"
     ray_head_port: "6379"
@@ -19,25 +18,32 @@
         name: ray
         state: present
 
-    - name: Discover private network interface
-      set_fact:
-        _private_iface: >-
-          {{ ansible_facts.interfaces
-            | map('extract', ansible_facts)
-            | selectattr('ipv4', 'defined')
-            | selectattr('ipv4.address', 'match', '^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)')
-            | map(attribute='device')
-            | first }}
+    - name: Create find_ip script
+      ansible.builtin.copy:
+        src: find_private_network.sh
+        dest: /usr/local/bin/find_private_network.sh
+        owner: root
+        group: root
+        mode: "0655"
 
-    - name: Set ray command (head node) # complete
+    - name: Test find network interface
+      ansible.builtin.command: /usr/local/bin/find_private_network.sh
+      register: find_private_network
+
+    - name: Fail if no private network
+      when: find_private_network.rc != 0
+      ansible.builin.fail:
+        msg: "No private network found! Result of script: {{ find_private_network.stdout }}"
+
+    - name: Set ray command (head node)
       when: ray_head_none
       ansible.builtin.set_fact:
-        _ray_cmd: uv run ray start --head --node-ip-address={{ _private_iface }} --port={{ ray_head_port }} --dashboard-host={{ __private_network }} --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
+        _ray_cmd: uv run ray start --head --node-ip-address="$PRIVATE_NETWORK" --port={{ ray_head_port }} --dashboard-host={{ __private_network }} --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
 
-    - name: Set ray command (worker node) # complete
+    - name: Set ray command (worker node)
       when: ray_worker_node
       ansible.builtin.set_fact:
-        _ray_cmd: uv run ray start --address="{{ ray_head_node_address }}:{{ ray_head_port }}" --node-ip-address="{{ _private_iface }}"
+        _ray_cmd: uv run ray start --address="{{ ray_head_node_address | default('$RAY_HEAD_NODE_ADDRESS', true) }}" --node-ip-address="$PRIVATE_NETWORK"
 
     - name: Create Ray systemd service
       ansible.builtin.template:
