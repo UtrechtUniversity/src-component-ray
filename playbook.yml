@@ -108,7 +108,6 @@
     - name: Fail if ray is not active
       become: true
       become_user: ray
-      ansible.builtin.command:
-        cmd: uv tool run ray status
-      retry: 10
+      ansible.builtin.command: uv tool run ray status
+      retries: 10
       delay: 5
