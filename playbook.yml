@@ -9,6 +9,7 @@
     _ray_head_node_port: "{{ ray_head_node_port | default('6379', true) }}"
     _ray_env: "{{ ray_env | default('') }}"
     _ray_public_key: "{{ ray_public_key | default('') }}"
+    _ray_fail_hard: "{{ ray_fail_hard | default(false, true) | bool }}"
     gather_facts: false
 
   tasks:
@@ -106,6 +107,7 @@
         daemon_reload: true
 
     - name: Fail if ray is not active
+      when: _ray_fail_hard
       become: true
       become_user: ray
       ansible.builtin.command: uv tool run ray status
