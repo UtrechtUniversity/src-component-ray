@@ -14,26 +14,58 @@
 
   tasks:
 
-    - name: Create user ray # fill in
+    - name: Create user ray
+      ansible.builtin.user:
+        name: ray
+        state: present
 
-    - name: Find private network interface # fill in -- assume there is only one private network interface
-      # attempt to make this task as generic as possible so it works across linux/unix flavours, but if necessary, just assume Debian or Ubuntu
-      # register the result in the variable _private_network
+    - name: Discover private network interface
+      set_fact:
+        _private_iface: >-
+          {{ ansible_facts.interfaces
+            | map('extract', ansible_facts)
+            | selectattr('ipv4', 'defined')
+            | selectattr('ipv4.address', 'match', '^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)')
+            | map(attribute='device')
+            | first }}
 
     - name: Set ray command (head node) # complete
       when: ray_head_none
       ansible.builtin.set_fact:
-        _ray_cmd: uv run ray start --head --node-ip-address={{ _private_network }} --port={{ ray_head_port }} --dashboard-host={{ __private_network }} --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
+        _ray_cmd: uv run ray start --head --node-ip-address={{ _private_iface }} --port={{ ray_head_port }} --dashboard-host={{ __private_network }} --dashboard-port={{ ray_dashboard_port }} --ray-client-server-port={{ ray_client_server_port }}
 
     - name: Set ray command (worker node) # complete
       when: ray_worker_node
       ansible.builtin.set_fact:
-        _ray_cmd: uv run ray start --address="{{ ray_head_node_address }}:{{ ray_head_port }}" --node-ip-address="{{ _private_network }}"
+        _ray_cmd: uv run ray start --address="{{ ray_head_node_address }}:{{ ray_head_port }}" --node-ip-address="{{ _private_iface }}"
 
-    - name: Create Ray systemd service # fill in
-      # run as user ray
-      # run command _ray_cmd
-      # allow passing optional extra environment variables defined in variable ray_env
-      # run handler
+    - name: Create Ray systemd service
+      ansible.builtin.template:
+        src: ray.service.j2
+        dest: /etc/systemd/system/ray.service
+        owner: ray
+        group: ray
+        mode: "0644"
+      notify: Start Ray systemd service
 
-    - name: Start Ray systemd service # fill in -- this should be a handler
+    - name: Enable logrotation
+      ansible.builtin.blockinfile:
+        path: /etc/logrotate.d/ray
+        block: >
+          /var/log/ray/ {
+            hourly
+            rotate 5
+            size 50M
+            compress
+            delaycompress
+            missingok
+            copytruncate
+          }
+        create: true
+        mode: "0644"
+
+  handlers:
+    - name: Start Ray systemd service
+      ansible.builtin.systemd:
+      name: ray
+      state: started
