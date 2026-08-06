@@ -8,6 +8,7 @@
     ray_client_server_port: "10001"
     ray_head_port: "6379"
     ray_env: ""
+    ray_public_key: ""
     gather_facts: false
 
   tasks:
@@ -19,6 +20,13 @@
       ansible.builtin.user:
         name: ray
         state: present
+
+    - name: Setup ssh key
+      when: ray_public_key | length > 0
+      ansible.posix.authorized_key:
+        user: ray
+        state: present
+        key: "{{ ray_public_key }}"
 
     - name: Install ray
       become: true
