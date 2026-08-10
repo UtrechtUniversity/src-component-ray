@@ -7,6 +7,7 @@ Type=simple
 User=ray
 EnvironmentFile="{{ _ray_env_file }}"
 ExecStart=/usr/local/bin/uv tool run ray start {{ _ray_head_node | ternary('--head', '') }}
+ExecStop=/usr/local/bin/uv tool run ray stop
 Restart=always
 
 [Install]
