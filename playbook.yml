@@ -16,8 +16,6 @@
 
   tasks:
 
-    # todo add storage location
-
     - name: User provisioning
       block:
         - name: Create user ray
@@ -39,9 +37,12 @@
             user: ray
             nopassword: true
             commands:
-              - /usr/bin/systemctl start ray.service
-              - /usr/bin/systemctl restart ray.service
-              - /usr/bin/systemctl stop ray.service
+              - /usr/bin/systemctl start ray_head.service
+              - /usr/bin/systemctl restart ray_head.service
+              - /usr/bin/systemctl stop ray_head.service
+              - /usr/bin/systemctl start ray_worker.service
+              - /usr/bin/systemctl restart ray_worker.service
+              - /usr/bin/systemctl stop ray_worker.service
 
     - name: Find private network
       block:
@@ -64,6 +65,14 @@
           ansible.builtin.fail:
             msg: "No private network found! Result of script: {{ find_private_network.stdout }}"
 
+    - name: Create Ray env file
+      ansible.builtin.template:
+        src: ray.env.j2
+        dest: "{{ _ray_env_file }}"
+        owner: ray
+        group: ray
+        mode: "0600"
+
     - name: Install Ray
       block:
         - name: Install Ray
@@ -71,18 +80,10 @@
           become_user: ray
           ansible.builtin.command: uv tool install "ray[{{ _ray_packages }}]"
 
-        - name: Create start_ray script
-          ansible.builtin.template:
-            src: start_ray.sh.j2
-            dest: /usr/local/bin/start_ray.sh
-            owner: root
-            group: root
-            mode: "0655"
-
         - name: Create Ray systemd service
           ansible.builtin.template:
             src: ray.service.j2
-            dest: /etc/systemd/system/ray.service
+            dest: /etc/systemd/system/ray_{{ _ray_head_node | ternary('head', 'worker') }}.service
             owner: ray
             group: ray
             mode: "0644"

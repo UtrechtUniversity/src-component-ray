@@ -1,12 +1,12 @@
 [Unit]
-Description=Ray
+Description=Ray {{ _ray_head_node | ternary('Head Node', 'Worker Node') }}
 After=network.target
 
 [Service]
 Type=simple
 User=ray
-Environment="{{ ray_env }}"
-ExecStart=/usr/local/bin/start_ray.sh
+EnvironmentFile="{{ _ray_env_file }}"
+ExecStart=/usr/local/bin/uv tool run ray start {{ _ray_head_node | ternary('--head', '') }}
 Restart=always
 
 [Install]
