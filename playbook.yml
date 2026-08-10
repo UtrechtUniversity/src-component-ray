@@ -10,8 +10,10 @@
     _ray_env: "{{ ray_env | default('') }}"
     _ray_public_key: "{{ ray_public_key | default('') }}"
     _ray_fail_hard: "{{ ray_fail_hard | default(false, true) | bool }}"
-    _ray_packages: "{{ ray_packages | default('default', true) | split(',') | map(trim) | list | join(',') }}"
+    _ray_packages: "{{ ray_packages | default('default', true) | split(',') | map('trim') | list | join(',') }}"
     _ray_env_file: /home/ray/ray.env
+    _ray_install: true # in the future make this optional, in case `ray cluster up` wants to install ray itself
+    _ray_service_name: "ray_{{ _ray_head_node | ternary('head', 'worker') }}"
     gather_facts: false
 
   tasks:
@@ -48,8 +50,8 @@
       block:
         - name: Create find_ip script
           ansible.builtin.copy:
-            src: find_private_network.sh
-            dest: /usr/local/bin/find_private_network.sh
+            src: find_private_ip.sh
+            dest: /usr/local/bin/find_private_ip.sh
             owner: root
             group: root
             mode: "0655"
@@ -74,16 +76,15 @@
         mode: "0600"
 
     - name: Install Ray
+      when: _ray_install
       block:
         - name: Install Ray
-          become: true
-          become_user: ray
           ansible.builtin.command: uv tool install "ray[{{ _ray_packages }}]"
 
         - name: Create Ray systemd service
           ansible.builtin.template:
             src: ray.service.j2
-            dest: /etc/systemd/system/ray_{{ _ray_head_node | ternary('head', 'worker') }}.service
+            dest: /etc/systemd/system/{{ _ray_service_name }}.service
             owner: ray
             group: ray
             mode: "0644"
@@ -95,7 +96,7 @@
 
     - name: Start Ray systemd service
       ansible.builtin.systemd:
-        name: ray
+        name: "{{ _ray_service_name }}"
         state: started
         daemon_reload: true
 

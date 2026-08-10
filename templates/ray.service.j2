@@ -1,5 +1,5 @@
 [Unit]
-Description=Ray {{ _ray_head_node | ternary('Head Node', 'Worker Node') }}
+Description={{ _ray_service_name | capitalize }}
 After=network.target
 
 [Service]
