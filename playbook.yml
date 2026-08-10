@@ -11,6 +11,7 @@
     _ray_public_key: "{{ ray_public_key | default('') }}"
     _ray_fail_hard: "{{ ray_fail_hard | default(false, true) | bool }}"
     _ray_packages: "{{ ray_packages | default('default', true) | split(',') | map('trim') | list | join(',') }}"
+    _ray_python_version: "{{ ray_python_version | default('') }}"
     _ray_env_file: /home/ray/ray.env
     _ray_install: true # in the future make this optional, in case `ray cluster up` wants to install ray itself
     _ray_service_name: "ray_{{ _ray_head_node | ternary('head', 'worker') }}"
