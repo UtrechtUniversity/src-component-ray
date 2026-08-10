@@ -101,5 +101,7 @@
     - name: Fail if ray is not active
       when: _ray_fail_hard
       ansible.builtin.command: sudo -uray uv tool run ray status
+      register: ray_status
+      failed_when: "not 'Active' in ray_status.stdout"
       retries: 10
       delay: 5
