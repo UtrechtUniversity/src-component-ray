@@ -6,7 +6,11 @@ After=network.target
 Type=simple
 User=ray
 EnvironmentFile="{{ _ray_env_file }}"
-ExecStart=/usr/local/bin/uv tool run ray start {{ _ray_head_node | ternary('--head --port '~_ray_head_node_port~'--address '~find_private_network.stdout, '') }}
+{% if _ray_head_node %}
+ExecStart=/usr/local/bin/uv tool run ray start --head --port {{ _ray_head_node_port }}--address {{ find_private_network.stdout }} --ray-client-server-port {{ _ray_client_server_port }}
+{% else %}
+ExecStart=/usr/local/bin/uv tool run ray start
+{% endif %}
 ExecStop=/usr/local/bin/uv tool run ray stop
 Restart=always
 
