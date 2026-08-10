@@ -10,77 +10,85 @@
     _ray_env: "{{ ray_env | default('') }}"
     _ray_public_key: "{{ ray_public_key | default('') }}"
     _ray_fail_hard: "{{ ray_fail_hard | default(false, true) | bool }}"
+    _ray_packages: "{{ ray_packages | default('default', true) | split(',') | map(trim) | list | join(',') }}"
+    _ray_env_file: /home/ray/ray.env
     gather_facts: false
 
   tasks:
 
     # todo add storage location
-    # todo scan for head node?
 
-    - name: Create user ray
-      ansible.builtin.user:
-        name: ray
-        state: present
+    - name: User provisioning
+      block:
+        - name: Create user ray
+          ansible.builtin.user:
+            name: ray
+            state: present
 
-    - name: Setup ssh key
-      when: (_ray_public_key | length) > 0
-      ansible.posix.authorized_key:
-        user: ray
-        state: present
-        key: "{{ _ray_public_key }}"
+        - name: Setup ssh key
+          when: (_ray_public_key | length) > 0
+          ansible.posix.authorized_key:
+            user: ray
+            state: present
+            key: "{{ _ray_public_key }}"
 
-    - name: Allow ray user to control systemd service
-      community.general.sudoers:
-        name: ray-systemctl
-        state: present
-        user: ray
-        nopassword: true
-        commands:
-          - /usr/bin/systemctl start ray.service
-          - /usr/bin/systemctl restart ray.service
-          - /usr/bin/systemctl stop ray.service
+        - name: Allow ray user to control systemd service
+          community.general.sudoers:
+            name: ray-systemctl
+            state: present
+            user: ray
+            nopassword: true
+            commands:
+              - /usr/bin/systemctl start ray.service
+              - /usr/bin/systemctl restart ray.service
+              - /usr/bin/systemctl stop ray.service
 
-    - name: Install ray
-      become: true
-      become_user: ray
-      ansible.builtin.command: uv tool install "ray[default]"
+    - name: Find private network
+      block:
+        - name: Create find_ip script
+          ansible.builtin.copy:
+            src: find_private_network.sh
+            dest: /usr/local/bin/find_private_network.sh
+            owner: root
+            group: root
+            mode: "0655"
 
-    - name: Create find_ip script
-      ansible.builtin.copy:
-        src: find_private_network.sh
-        dest: /usr/local/bin/find_private_network.sh
-        owner: root
-        group: root
-        mode: "0655"
+        - name: Test find network interface
+          ansible.builtin.command:
+            cmd: /usr/local/bin/find_private_ip.sh
+          register: find_private_network
 
-    - name: Create start_ray script
-      ansible.builtin.template:
-        src: start_ray.sh.j2
-        dest: /usr/local/bin/start_ray.sh
-        owner: root
-        group: root
-        mode: "0655"
+        - name: Fail if no private network
+          when:
+            - find_private_network.rc != 0
+          ansible.builtin.fail:
+            msg: "No private network found! Result of script: {{ find_private_network.stdout }}"
 
-    - name: Test find network interface
-      ansible.builtin.command:
-        cmd: /usr/local/bin/find_private_network.sh
-      register: find_private_network
+    - name: Install Ray
+      block:
+        - name: Install Ray
+          become: true
+          become_user: ray
+          ansible.builtin.command: uv tool install "ray[{{ _ray_packages }}]"
 
-    - name: Fail if no private network
-      when: find_private_network.rc != 0
-      ansible.builtin.fail:
-        msg: "No private network found! Result of script: {{ find_private_network.stdout }}"
+        - name: Create start_ray script
+          ansible.builtin.template:
+            src: start_ray.sh.j2
+            dest: /usr/local/bin/start_ray.sh
+            owner: root
+            group: root
+            mode: "0655"
 
-    - name: Create Ray systemd service
-      ansible.builtin.template:
-        src: ray.service.j2
-        dest: /etc/systemd/system/ray.service
-        owner: ray
-        group: ray
-        mode: "0644"
-      notify:
-        - Start Ray systemd service
-        - Fail if ray is not active
+        - name: Create Ray systemd service
+          ansible.builtin.template:
+            src: ray.service.j2
+            dest: /etc/systemd/system/ray.service
+            owner: ray
+            group: ray
+            mode: "0644"
+          notify:
+            - Start Ray systemd service
+            - Fail if ray is not active
 
   handlers:
 
