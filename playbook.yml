@@ -39,12 +39,9 @@
             user: ray
             nopassword: true
             commands:
-              - /usr/bin/systemctl start ray_head.service
-              - /usr/bin/systemctl restart ray_head.service
-              - /usr/bin/systemctl stop ray_head.service
-              - /usr/bin/systemctl start ray_worker.service
-              - /usr/bin/systemctl restart ray_worker.service
-              - /usr/bin/systemctl stop ray_worker.service
+              - /usr/bin/systemctl start {{ _ray_service_name}}.service
+              - /usr/bin/systemctl restart {{ _ray_service_name}}.service
+              - /usr/bin/systemctl stop {{ _ray_service_name}}.service
 
     - name: Find private network
       block:
