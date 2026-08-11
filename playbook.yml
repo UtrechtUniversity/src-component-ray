@@ -20,15 +20,11 @@
       {%- else -%}
       [{{ _ray_default_packages | join(',') }}]
       {%- endif -%}
-    _ray_python_version: "{{ ray_python_version | default(false, true) }}"
+    _ray_python_version: "{{ ray_python_version | default('') }}"
     _ray_setup: true # in the future make this optional, in case `ray up` wants to install ray itself
     _ray_service_name: "ray_{{ _ray_head_node | ternary('head', 'worker') }}"
-    _ray_cmd: >-
-      /usr/local/bin/uv tool run
-      {% if _ray_python_version %}
-      -p {{ _ray_python_version }}
-      {% endif %}
-      "ray{{ _ray_packages }}"
+    _ray_venv: /opt/{{ _ray_service_name }}-venv
+    _ray_cmd: "{{ _ray_venv }}/bin/ray"
     gather_facts: false
 
   tasks:
@@ -105,17 +101,40 @@
             group: ray
             mode: "0600"
 
-    - name: Create Ray systemd service
+    - name: Setup Ray
       when: _ray_setup
-      ansible.builtin.template:
-        src: ray.service.j2
-        dest: /etc/systemd/system/{{ _ray_service_name }}.service
-        owner: root
-        group: root
-        mode: "0644"
-      notify:
-        - Start ray systemd service
-        - Fail if ray is not active
+      block:
+        - name: Create venv
+          ansible.builtin.command:
+            cmd: |-
+              uv venv
+              {% if (_ray_python_version | length) > 0 %}
+              --python {{ _ray_python_version }}
+              {% else %}
+              --no-managed-python
+              {% endif %}
+              {{ _ray_venv }}
+            creates: "{{ _ray_venv }}"
+          environment:
+            UV_PYTHON_INSTALL_DIR: /opt/
+
+        - name: Install ray
+          ansible.builtin.command:
+            cmd: uv pip install ray{{ _ray_packages }}
+            creates: "{{ _ray_venv }}/bin/ray"
+          environment:
+            VIRTUAL_ENV: "{{ _ray_venv }}"
+
+        - name: Create Ray systemd service
+          ansible.builtin.template:
+            src: ray.service.j2
+            dest: /etc/systemd/system/{{ _ray_service_name }}.service
+            owner: root
+            group: root
+            mode: "0644"
+          notify:
+            - Start ray systemd service
+            - Fail if ray is not active
 
   handlers:
 
