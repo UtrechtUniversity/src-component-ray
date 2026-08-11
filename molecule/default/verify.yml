@@ -3,5 +3,23 @@
   hosts: all
   gather_facts: false
   tasks:
-    # You can add tasks here to verify that everything is working as you expect.
-    # You can use e.g. the ansible.builtin.assert module for this
+    - name: Copy test script
+      ansible.builtin.copy:
+        src: ../files/test.py
+        dest: /home/ray/test.py
+        owner: ray
+        group: ray
+        mode: "0655"
+
+    - name: Run test script
+      ansible.builtin.command:
+        cmd: sudo -uray uv run --with "ray[client]" --no-managed-python python /home/ray/test.py
+      timeout: 15
+      environment:
+        RAY_ADDRESS: "ray://test-ray:10001" # use the name of the container
+      register: test_output
+
+    - name: Assert success
+      ansible.builtin.assert:
+        that:
+          - '"16" in test_output.stdout'
