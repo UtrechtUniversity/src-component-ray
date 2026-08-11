@@ -2,7 +2,22 @@
 driver:
   name: podman
 platforms:
-  - name: workspace-src-ubuntu_noble
+  - name: test-ray
     image: ghcr.io/utrechtuniversity/src-test-workspace:ubuntu_noble
     command: /sbin/init
     pre_build_image: true
+    published_ports:
+      - 10001:10001
+scenario:
+  test_sequence:
+    - dependency
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - converge not necessary since we include the role in the verify step
+    # - idempotence not necessary since we're only setting facts in this role
+    - verify
+    - cleanup
+    - destroy
