@@ -49,6 +49,10 @@ jobs:
           uv venv $VIRTUAL_ENV
           uv pip install ansible-lint
 
+      - name: Install Ansible Collections
+        run: |
+          uv run ansible-galaxy collection install -r requirements.yml
+
       - name: Run Ansible Lint
         run: |
           uv run ansible-lint .
