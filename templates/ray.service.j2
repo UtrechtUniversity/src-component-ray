@@ -5,14 +5,30 @@ After=network.target
 [Service]
 Type=simple
 User=ray
-EnvironmentFile="{{ _ray_env_file }}"
+EnvironmentFile=/home/ray/{{ _ray_service_name }}.env
+
 {% if _ray_head_node %}
-ExecStart=/usr/local/bin/uv tool run ray start --head --port {{ _ray_head_node_port }}--address {{ find_private_network.stdout }} --ray-client-server-port {{ _ray_client_server_port }}
+ExecStart={{ _ray_cmd }} start --disable-usage-stats --block --node-ip-address "$RAY_NODE_IP_ADDRESS" --head --port "$RAY_PORT" --dashboard-host "$RAY_DASHBOARD_HOST" --dashboard-port "$RAY_DASHBOARD_PORT" --ray-client-server-port "$RAY_CLIENT_SERVER_PORT"
 {% else %}
-ExecStart=/usr/local/bin/uv tool run ray start
+ExecStart={{ _ray_cmd }} start --disable-usage-stats --block --node-ip-address "$RAY_NODE_IP_ADDRESS" --address "$RAY_ADDRESS"
 {% endif %}
+
 ExecStop=/usr/local/bin/uv tool run ray stop
-Restart=always
+# The first stop sometimes doesn't end all processes, so try harder:
+ExecStop=/usr/local/bin/uv tool run ray stop --force
+ExecStopPost=/usr/bin/rm -rf /tmp/{{ _ray_service_name }}
+Restart=on-failure
+
+Environment=TMPDIR=/tmp/{{ _ray_service_name }}
+StandardOutput=append:/var/log/{{ _ray_service_name }}.log
+StandardError=append:/var/log/{{ _ray_service_name }}.log
+
+# Ray needs high limits
+TasksMax=infinity
+LimitNPROC=infinity
+LimitNOFILE=1048576 # linux default max
+LimitSTACK=8388608
+MemoryMax=infinity
 
 [Install]
 WantedBy=multi-user.target
