@@ -10,16 +10,23 @@
         owner: ray
         group: ray
         mode: "0655"
-
-    - name: Run test script
+  
+    - name: Test Ray job API
       ansible.builtin.command:
-        cmd: sudo -uray uv run --with "ray[client]" --no-managed-python python /home/ray/test.py
+        cmd: /opt/ray_head-venv/bin/ray job submit --working-dir /home/ray/ --address $(find_private_ip.sh):6379 -- python test.py
+      timeout: 15
+      register: test_job_output
+
+    - name: Test Ray client API
+      ansible.builtin.command:
+        cmd: /opt/ray_head-venv/bin/python /home/ray/test.py
       timeout: 15
       environment:
         RAY_ADDRESS: "ray://test-ray:10001" # use the name of the container
-      register: test_output
+      register: test_client_output
 
     - name: Assert success
       ansible.builtin.assert:
         that:
-          - '"16" in test_output.stdout'
+          - '"16" in test_job_output.stdout'
+          - '"16" in test_client_output.stdout'
