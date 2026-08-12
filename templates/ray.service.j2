@@ -8,9 +8,9 @@ User=ray
 EnvironmentFile=/home/ray/{{ _ray_service_name }}.env
 
 {% if _ray_head_node %}
-ExecStart={{ _ray_cmd }} start --disable-usage-stats --block --node-ip-address "$RAY_NODE_IP_ADDRESS" --head --port "$RAY_PORT" --dashboard-host "$RAY_DASHBOARD_HOST" --dashboard-port "$RAY_DASHBOARD_PORT" --ray-client-server-port "$RAY_CLIENT_SERVER_PORT"
+ExecStart={{ _ray_cmd }} start --disable-usage-stats --block --node-ip-address "$RAY_NODE_IP_ADDRESS" --head --port "$RAY_PORT" --dashboard-host "$RAY_DASHBOARD_HOST" --dashboard-port "$RAY_DASHBOARD_PORT" --ray-client-server-port "$RAY_CLIENT_SERVER_PORT" --dashboard-agent-listen-port=52365 --runtime-env-agent-port=52366 --temp-dir /tmp/{{ _ray_service_name }} --node-manager-port=6380 --object-manager-port=6381 --min-worker-port=20000 --max-worker-port=20099
 {% else %}
-ExecStart={{ _ray_cmd }} start --disable-usage-stats --block --node-ip-address "$RAY_NODE_IP_ADDRESS" --address "$RAY_ADDRESS"
+ExecStart={{ _ray_cmd }} start --disable-usage-stats --block --node-ip-address "$RAY_NODE_IP_ADDRESS" --address "$RAY_ADDRESS" --dashboard-agent-listen-port=52367 --runtime-env-agent-port=52368 --temp-dir /tmp/{{ _ray_service_name }} --node-manager-port=6382 --object-manager-port=6383 --min-worker-port=20100 --max-worker-port=20199
 {% endif %}
 
 ExecStop=/usr/local/bin/uv tool run ray stop
