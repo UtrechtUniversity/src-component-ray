@@ -4,7 +4,7 @@ import ray
 import os
 
 # 1. Start Ray
-ray.init(address=os.environ.get('RAY_ADDRESS'))
+ray.init(address=os.environ.get('RAY_ADDRESS', None))
 
 # 2. Define a remote function (task)
 @ray.remote

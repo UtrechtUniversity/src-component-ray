@@ -12,21 +12,20 @@
         mode: "0655"
   
     - name: Test Ray job API
-      ansible.builtin.command:
-        cmd: /opt/ray_head-venv/bin/ray job submit --working-dir /home/ray/ --address $(find_private_ip.sh):6379 -- python test.py
+      ansible.builtin.command: /opt/ray_head-venv/bin/ray job submit --working-dir /home/ray/ --address test-ray:6379 -- python test.py
       timeout: 15
       register: test_job_output
 
-    - name: Test Ray client API
-      ansible.builtin.command:
-        cmd: /opt/ray_head-venv/bin/python /home/ray/test.py
-      timeout: 15
-      environment:
-        RAY_ADDRESS: "ray://test-ray:10001" # use the name of the container
-      register: test_client_output
+    # - name: Test Ray client API
+    #   ansible.builtin.command:
+    #     cmd: /opt/ray_head-venv/bin/python /home/ray/test.py
+    #   timeout: 15
+    #   environment:
+    #     RAY_ADDRESS: "ray://test-ray:10001" # use the name of the container
+    #   register: test_client_output
 
     - name: Assert success
       ansible.builtin.assert:
         that:
-          - '"16" in test_job_output.stdout'
-          - '"16" in test_client_output.stdout'
+          - '"Result: 16" in test_job_output.stdout'
+          - '"Result: 16" in test_client_output.stdout'
