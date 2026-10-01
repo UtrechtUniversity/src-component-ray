@@ -21,7 +21,7 @@
       [{{ _ray_default_packages | join(',') }}]
       {%- endif -%}
     _ray_python_version: "{{ ray_python_version | default('') }}"
-    _ray_setup: true # in the future make this optional, in case `ray up` wants to install ray itself
+    _ray_setup: "{{ ray_do_setup | default(true, true) | bool }}"
     _ray_service_name: "ray_{{ _ray_head_node | ternary('head', 'worker') }}"
     _ray_venv: /opt/{{ _ray_service_name }}-venv
     _ray_cmd: "{{ _ray_venv }}/bin/ray"
