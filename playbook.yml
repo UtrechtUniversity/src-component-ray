@@ -115,6 +115,7 @@
               {% else %}
               --no-managed-python
               {% endif %}
+              --seed
               {{ _ray_venv }}
             creates: "{{ _ray_venv }}"
           environment:
