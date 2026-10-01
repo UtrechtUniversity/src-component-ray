@@ -36,6 +36,7 @@
             name: ray
             state: present
             shell: /bin/bash
+            generate_ssh_key: true
 
         - name: Setup ssh key
           when: (_ray_public_key | length) > 0
