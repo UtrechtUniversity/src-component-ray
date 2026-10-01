@@ -20,7 +20,8 @@
       {%- else -%}
       [{{ _ray_default_packages | join(',') }}]
       {%- endif -%}
-    _ray_python_version: "{{ ray_python_version | default('') }}"
+    _ray_python_version: "{{ ray_python_version | default('', true) }}"
+    _ray_version: "{{ ray_version | default('', true) | length | ternary('=='~ray_version, '') }}"
     _ray_setup: "{{ ray_do_setup | default(true, true) | bool }}"
     _ray_service_name: "ray_{{ _ray_head_node | ternary('head', 'worker') }}"
     _ray_venv: /opt/{{ _ray_service_name }}-venv
@@ -34,6 +35,7 @@
           ansible.builtin.user:
             name: ray
             state: present
+            shell: /bin/bash
 
         - name: Setup ssh key
           when: (_ray_public_key | length) > 0
@@ -43,6 +45,7 @@
             key: "{{ _ray_public_key }}"
 
         - name: Allow ray user to control systemd service
+          when: _ray_setup
           tags: molecule-idempotence-notest
           community.general.sudoers:
             name: ray-systemctl
@@ -101,8 +104,7 @@
             group: ray
             mode: "0600"
 
-    - name: Setup Ray
-      when: _ray_setup
+    - name: Setup venv
       block:
         - name: Create venv
           ansible.builtin.command:
@@ -117,15 +119,22 @@
             creates: "{{ _ray_venv }}"
           environment:
             UV_PYTHON_INSTALL_DIR: /opt/
-
+  
         - name: Install ray
           ansible.builtin.command:
-            cmd: uv pip install ray{{ _ray_packages }}
+            cmd: uv pip install ray{{ _ray_packages }}{{ _ray_version }}
             creates: "{{ _ray_venv }}/bin/ray"
           environment:
             VIRTUAL_ENV: "{{ _ray_venv }}"
-
+  
+        - name: Add venv to .bashrc PATH
+          ansible.builtin.lineinfile:
+            path: "/home/ray/.bashrc"
+            line: 'export PATH="{{ _ray_venv }}/bin/:$PATH"'
+            state: present
+  
         - name: Create Ray systemd service
+          when: _ray_setup
           ansible.builtin.template:
             src: ray.service.j2
             dest: /etc/systemd/system/{{ _ray_service_name }}.service
