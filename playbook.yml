@@ -53,9 +53,9 @@
             user: ray
             nopassword: true
             commands:
-              - /usr/bin/systemctl start {{ _ray_service_name}}.service
-              - /usr/bin/systemctl restart {{ _ray_service_name}}.service
-              - /usr/bin/systemctl stop {{ _ray_service_name}}.service
+              - /usr/bin/systemctl start {{ _ray_service_name }}.service
+              - /usr/bin/systemctl restart {{ _ray_service_name }}.service
+              - /usr/bin/systemctl stop {{ _ray_service_name }}.service
 
     - name: Find private network
       block:
@@ -86,15 +86,8 @@
         - name: Set connect address
           ansible.builtin.set_fact:
             _ray_connect_address: >-
-              {%- if _ray_head_node_address | length > 0 -%}
-              {%- if ':' in _ray_head_node_address -%}
-              {{ _ray_head_node_address }}
-              {%- else -%}
-              {{ _ray_head_node_address }}:{{ _ray_head_node_port }}
-              {%- endif -%}
-              {%- elif _ray_head_node -%}
-              {{ _ray_internal_ip }}:{{ _ray_head_node_port }}
-              {%- endif -%}
+              {%- if _ray_head_node_address | length > 0 -%} {%- if ':' in _ray_head_node_address -%} {{ _ray_head_node_address }}{%- else -%} {{ _ray_head_node_address
+              }}:{{ _ray_head_node_port }}{%- endif -%} {%- elif _ray_head_node -%} {{ _ray_internal_ip }}:{{ _ray_head_node_port }}{%- endif -%}
 
         - name: Create Ray env file
           ansible.builtin.template:
@@ -120,20 +113,20 @@
             creates: "{{ _ray_venv }}"
           environment:
             UV_PYTHON_INSTALL_DIR: /opt/
-  
+
         - name: Install ray
           ansible.builtin.command:
             cmd: uv pip install ray{{ _ray_packages }}{{ _ray_version }} git+https://github.com/UtrechtUniversity/src-ray-provider.git
             creates: "{{ _ray_venv }}/bin/ray"
           environment:
             VIRTUAL_ENV: "{{ _ray_venv }}"
-  
+
         - name: Add venv to .bashrc PATH
           ansible.builtin.lineinfile:
             path: "/home/ray/.bashrc"
             line: 'export PATH="{{ _ray_venv }}/bin/:$PATH"'
             state: present
-  
+
         - name: Create Ray systemd service
           when: _ray_setup
           ansible.builtin.template:
@@ -147,7 +140,6 @@
             - Fail if ray is not active
 
   handlers:
-
     - name: Start ray systemd service
       ansible.builtin.systemd:
         name: "{{ _ray_service_name }}"
