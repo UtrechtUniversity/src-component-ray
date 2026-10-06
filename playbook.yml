@@ -44,6 +44,17 @@
             user: ray
             state: present
             key: "{{ _ray_public_key }}"
+        
+        # The Ray SRC provider expects the public key to be at a pre-determined location
+        # This is to propagate the key to new nodes.
+        - name: Write ssh key to Ray's expected location
+          when: (_ray_public_key | length) > 0
+          ansible.copy:
+            dest: /home/ray/ray_public.pub
+            owner: ray
+            group: ray
+            mode: "0600"
+            content: "{{ _ray_public_key }}"
 
         - name: Add token to .bashrc
           when: (_ray_src_token | length) > 0
