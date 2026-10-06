@@ -47,9 +47,9 @@
         
         # The Ray SRC provider expects the public key to be at a pre-determined location
         # This is to propagate the key to new nodes.
-        - name: Write ssh key to Ray's expected location
+        - name: Write ssh key to expected location
           when: (_ray_public_key | length) > 0
-          ansible.copy:
+          ansible.builtin.copy:
             dest: /home/ray/ray_public.pub
             owner: ray
             group: ray
