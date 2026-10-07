@@ -1,16 +1,10 @@
-# Template repository for SURF ResearchCloud Components
+# Ray component for SURF ResearchCloud
 
-This repository provides you with the boilerplate needed to get started with Ansible-based components for SURF ResearchCloud. It contains:
+Installs [Ray.io](https://docs.ray.io/en/latest/) nodes on SURF ResearchCloud (read more [here](https://utrechtuniversity.github.io/re-presentation-src-ray/slides.html#/ray-on-surf-researchcloud)).
 
-* An example playbook file (`playbook.yml`)
-* An example dependency file (`requirements.yml`)
-* Directory structure for separating Ansible concerns:
-  * `vars` for declaring variables
-  * `roles` for roles you want to use that cannot be imported as a collection in the requirements file
-* `component_vars.yml` can be used to simulate variables defined in the ResearchCloud portal, in conjunction with [run_component.sh](#manually-running-the-component-on-a-container)
-* Test configuration in the `molecule` directory.
-  * A molecule configuration file (`.env.yml`)
-* GitHub Actions workflows (see [CI](#ci)).
+**Currently in beta -- contact research.engineering@uu.nl if you would like to use this.** We will need to provide you with access to certain ResearchCloud catalog items.
+
+**Security note**: to use Ray on SRC, you currently need to save an API key in a secret `RAY_SCR_TOKEN` inside your Collaboration. At the moment, ResearchCloud API keys cannot yet be scoped to a specific CO (coming soon), so it is best to test this package in a Collaboration to which only you have access.
 
 ## Manually running the component on a container
 
