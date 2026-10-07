@@ -44,7 +44,7 @@
             user: ray
             state: present
             key: "{{ _ray_public_key }}"
-        
+
         # The Ray SRC provider expects the public key to be at a pre-determined location
         # This is to propagate the key to new nodes.
         - name: Write ssh key to expected location
@@ -107,7 +107,8 @@
         - name: Set connect address
           ansible.builtin.set_fact:
             _ray_connect_address: >-
-              {%- if _ray_head_node_address | length > 0 -%} {%- if ':' in _ray_head_node_address -%} {{ _ray_head_node_address }}{%- else -%} {{ _ray_head_node_address
+              {%- if _ray_head_node_address | length > 0 -%} {%- if ':' in _ray_head_node_address -%} {{ _ray_head_node_address }}{%- else -%}
+              {{ _ray_head_node_address
               }}:{{ _ray_head_node_port }}{%- endif -%} {%- elif _ray_head_node -%} {{ _ray_internal_ip }}:{{ _ray_head_node_port }}{%- endif -%}
 
         - name: Create Ray env file
