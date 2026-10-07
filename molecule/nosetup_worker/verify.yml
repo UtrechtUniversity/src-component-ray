@@ -1,0 +1,11 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Try starting Ray
+      ansible.builtin.shell: >-
+        source ray_worker.env && ray start
+          --disable-usage-stats
+          --node-ip-address "$RAY_NODE_IP_ADDRESS"
+          --address "$RAY_HEAD_IP:$RAY_PORT"

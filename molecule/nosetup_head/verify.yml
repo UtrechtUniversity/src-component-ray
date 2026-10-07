@@ -1,0 +1,15 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Try starting Ray
+      ansible.builtin.shell: >-
+        source ray_head.env && ray start --head
+        --disable-usage-stats
+        --node-ip-address "$RAY_NODE_IP_ADDRESS"
+        --head
+        --port "$RAY_PORT"
+        --dashboard-port "$RAY_DASHBOARD_PORT"
+        --num-cpus=0
+        # --autoscaling-config=ray_bootstrap_config.yaml
