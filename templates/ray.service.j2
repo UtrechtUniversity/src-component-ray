@@ -10,6 +10,7 @@ Environment="PATH={{ _ray_venv }}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/
 
 {% if _ray_head_node %}
 ExecStart={{ _ray_cmd }} start \
+    {% if _ray_autoscaling_config %}--autoscaling-config /home/ray/ray_bootstrap_config.yaml \{% endif %}
     --disable-usage-stats \
     --block \
     --node-ip-address "$RAY_NODE_IP_ADDRESS" \
