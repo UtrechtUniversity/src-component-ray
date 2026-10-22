@@ -10,7 +10,7 @@
         owner: ray
         group: ray
         mode: "0655"
-  
+
     - name: Test Ray job API
       ansible.builtin.command: /opt/ray_head-venv/bin/ray job submit --working-dir /home/ray/ --address test-ray:6379 -- python test.py
       timeout: 15

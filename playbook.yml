@@ -27,6 +27,7 @@
     _ray_service_name: "ray_{{ _ray_head_node | ternary('head', 'worker') }}"
     _ray_venv: /opt/{{ _ray_service_name }}-venv
     _ray_cmd: "{{ _ray_venv }}/bin/ray"
+    _ray_autoscaling_config: "{{ ray_autoscaling_config | default('') }}"
     gather_facts: false
 
   tasks:
@@ -44,7 +45,7 @@
             user: ray
             state: present
             key: "{{ _ray_public_key }}"
-        
+
         # The Ray SRC provider expects the public key to be at a pre-determined location
         # This is to propagate the key to new nodes.
         - name: Write ssh key to expected location
@@ -106,9 +107,16 @@
 
         - name: Set connect address
           ansible.builtin.set_fact:
-            _ray_connect_address: >-
-              {%- if _ray_head_node_address | length > 0 -%} {%- if ':' in _ray_head_node_address -%} {{ _ray_head_node_address }}{%- else -%} {{ _ray_head_node_address
-              }}:{{ _ray_head_node_port }}{%- endif -%} {%- elif _ray_head_node -%} {{ _ray_internal_ip }}:{{ _ray_head_node_port }}{%- endif -%}
+            _ray_connect_address: |-
+              {%- if _ray_head_node_address | length > 0 -%}
+              {%- if ':' in _ray_head_node_address -%}
+              {{ _ray_head_node_address }}
+              {%- else -%}
+              {{ _ray_head_node_address }}:{{ _ray_head_node_port }}
+              {%- endif -%}
+              {%- elif _ray_head_node -%}
+              {{ _ray_internal_ip }}:{{ _ray_head_node_port }}
+              {%- endif -%}
 
         - name: Create Ray env file
           ansible.builtin.template:
@@ -147,6 +155,15 @@
             path: "/home/ray/.bashrc"
             line: 'export PATH="{{ _ray_venv }}/bin/:$PATH"'
             state: present
+
+        - name: Create autoscaling config
+          when: (_ray_autoscaling_config | length) > 0
+          ansible.builtin.copy:
+            dest: /home/ray/
+            owner: ray
+            group: ray
+            mode: "0600"
+            content: "{{ _ray_autoscaling_config }}"
 
         - name: Create Ray systemd service
           when: _ray_setup
